@@ -1,0 +1,33 @@
+name: TryHackMe Activity Sync
+
+on:
+  schedule:
+    # Her gün saat 23:00'da (UTC 20:00) otomatik çalışır
+    - cron: '0 20 * * *'
+  workflow_dispatch: # Actions sekmesinden manuel tetikleme butonu ekler
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Fetch THM Data & Commit
+        run: |
+          CURRENT_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          
+          # stats.json dosyasını güncelle
+          echo "{\"user\": \"tolgakucuk\", \"last_updated\": \"$CURRENT_DATE\"}" > stats.json
+
+          # Git konfigürasyonu
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Değişiklikleri commit et ve pushla
+          git add stats.json
+          git commit -m "chore: sync TryHackMe activity [$CURRENT_DATE]" || exit 0
+          git push
